@@ -12,14 +12,25 @@ struct AddItemView: View {
     @State private var name = ""
     @State private var quantity = 1
     @State private var expiryDate = Date()
+    @State private var showingScanner = false
     
     @Environment(\.dismiss) var dismiss
+    
+    private func handleScannedCode(_ code: String) {
+        name = ProductLookupService.name(for: code)
+    }
     
     var body: some View {
         NavigationStack {
             Form {
                 Section {
                     TextField("Food Name", text: $name)
+                }
+                
+                Section {
+                    Button("Scan Barcode") {
+                        showingScanner = true
+                    }
                 }
                 
                 Section {
@@ -48,6 +59,11 @@ struct AddItemView: View {
                             dismiss()
                         }
                     }
+                }
+            }
+            .sheet(isPresented: $showingScanner) {
+                BarcodeScannerView { code in
+                    handleScannedCode(code)
                 }
             }
         }

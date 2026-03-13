@@ -11,9 +11,28 @@ struct RecipesView: View {
     
     @ObservedObject var viewModel: InventoryViewModel
     @StateObject private var recipeEngine = RecipeEngine()
+    @ObservedObject var shoppingManager = ShoppingListManager.shared
     
     var availableIngredients: [FoodItem] {
         viewModel.activeItems
+    }
+    
+    var missingIngredients: [String] {
+        let inventoryNames = availableIngredients.map {
+            $0.name.lowercased()
+        }
+
+        var missing: Set<String> = []
+
+        for recipe in recipeEngine.recipes {
+            for ingredient in recipe.ingredients {
+                if !inventoryNames.contains(ingredient.lowercased()) {
+                    missing.insert(ingredient)
+                }
+            }
+        }
+
+        return Array(missing).sorted()
     }
     
     var body: some View {
@@ -125,6 +144,34 @@ struct RecipesView: View {
                             }
                         }
                         
+                        // Missing Ingredients Section
+                        if !missingIngredients.isEmpty {
+                            Text("Missing Ingredients")
+                                .font(.title3)
+                                .bold()
+                                .padding(.horizontal)
+
+                            VStack(spacing: 12) {
+                                ForEach(missingIngredients, id: \.self) { ingredient in
+                                    HStack {
+                                        Text(ingredient)
+                                            .font(.headline)
+
+                                        Spacer()
+
+                                        Button("+ Add") {
+                                            shoppingManager.add(ingredient)
+                                        }
+                                        .font(.caption)
+                                    }
+                                    .padding()
+                                    .background(Color(.systemGray6))
+                                    .cornerRadius(12)
+                                    .padding(.horizontal)
+                                }
+                            }
+                        }
+                        
                         // Ingredient List
                         Text("Available Ingredients")
                             .font(.title3)
@@ -167,4 +214,6 @@ struct RecipesView: View {
             }
         }
     }
+
+
 
