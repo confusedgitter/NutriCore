@@ -21,12 +21,12 @@ struct MainTabView: View {
                     Label("Recipes", systemImage: "fork.knife")
                 }
             
-            Text("Calories")
+            CaloriesView()
                 .tabItem {
-                    Label("Calories", systemImage: "flame")
+                    Label("Calories", systemImage: "flame.fill")
                 }
             
-            Text("Profile")
+            ProfileView()
                 .tabItem {
                     Label("Profile", systemImage: "person")
                 }

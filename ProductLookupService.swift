@@ -2,20 +2,27 @@ import Foundation
 
 struct ProductLookupService {
     
-    static func name(for barcode: String) -> String {
-        switch barcode {
-        case "8901030895484":
-            return "Milk"
-        case "8906007282008":
-            return "Bread"
-        case "8901491101630":
-            return "Rice"
-        case "8901719123456":
-            return "Peanut Butter"
-        case "8901234567890":
-            return "Eggs"
-        default:
-            return barcode
+    static func lookup(barcode: String) async -> String? {
+        guard let url = URL(string: "https://world.openfoodfacts.org/api/v0/product/\(barcode).json") else {
+            return nil
+        }
+        
+        do {
+            let (data, _) = try await URLSession.shared.data(from: url)
+            
+            let decoded = try JSONDecoder().decode(OpenFoodResponse.self, from: data)
+            return decoded.product?.product_name
+        } catch {
+            print("Lookup failed:", error)
+            return nil
         }
     }
+}
+
+struct OpenFoodResponse: Decodable {
+    let product: Product?
+}
+
+struct Product: Decodable {
+    let product_name: String?
 }

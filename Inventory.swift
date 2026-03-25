@@ -10,6 +10,7 @@ struct InventoryView: View {
     
     @ObservedObject var viewModel: InventoryViewModel
     @State private var showingAddItem = false
+    @State private var editingItem: FoodItem?
     
     private var filteredItems: [FoodItem] {
         switch selectedFilter {
@@ -90,6 +91,16 @@ struct InventoryView: View {
                 }
                 .pickerStyle(.segmented)
                 .padding(.horizontal)
+                HStack(spacing: 8) {
+                    Text("\(viewModel.items.count) items")
+                    Text("•")
+                    Text("\(viewModel.activeItems.filter { expiryColor(for: $0) != .green }.count) expiring soon")
+                    Text("•")
+                    Text("\(viewModel.wastedItems.count) wasted")
+                }
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .padding(.horizontal)
                 
                 List {
                     ForEach(filteredItems) { item in
@@ -104,6 +115,8 @@ struct InventoryView: View {
                                 HStack {
                                     Text(item.name)
                                         .font(.headline)
+                                        .foregroundColor(item.status == .active ? .primary : .secondary)
+                                        .strikethrough(item.status != .active)
                                     
                                     Spacer()
                                     
@@ -115,7 +128,16 @@ struct InventoryView: View {
                                 Text(expiryText(for: item))
                                     .font(.caption)
                                     .foregroundColor(expiryColor(for: item))
+                                
+                                if item.status != .active {
+                                    Text(item.status == .consumed ? "Consumed" : "Wasted")
+                                        .font(.caption2)
+                                        .foregroundColor(item.status == .consumed ? .green : .red)
+                                }
                             }
+                        }
+                        .onTapGesture {
+                            editingItem = item
                         }
                         .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                             Button {
@@ -126,6 +148,7 @@ struct InventoryView: View {
                                     let item = viewModel.items[index]
                                     NotificationManager.shared.cancelNotifications(for: item)
                                     viewModel.items[index].status = .consumed
+                                    viewModel.items[index].completedDate = Date()
                                 }
                             } label: {
                                 Label("Consumed", systemImage: "checkmark.circle")
@@ -140,6 +163,7 @@ struct InventoryView: View {
                                     let item = viewModel.items[index]
                                     NotificationManager.shared.cancelNotifications(for: item)
                                     viewModel.items[index].status = .wasted
+                                    viewModel.items[index].completedDate = Date()
                                 }
                             } label: {
                                 Label("Wasted", systemImage: "xmark.circle")
@@ -169,6 +193,9 @@ struct InventoryView: View {
             }
             .sheet(isPresented: $showingAddItem) {
                 AddItemView(viewModel: viewModel)
+            }
+            .sheet(item: $editingItem) { item in
+                AddItemView(viewModel: viewModel, existingItem: item)
             }
         }
     }

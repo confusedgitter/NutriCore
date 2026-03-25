@@ -13,6 +13,7 @@ import UserNotifications
 struct ShelfLifeApp: App {
     
     @StateObject private var viewModel = InventoryViewModel()
+    @StateObject private var themeManager = ThemeManager.shared
     
     init() {
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { granted, error in
@@ -26,6 +27,7 @@ struct ShelfLifeApp: App {
     var body: some Scene {
         WindowGroup {
             MainTabView(viewModel: viewModel)
+                .preferredColorScheme(themeManager.selectedTheme.colorScheme)
                 .onAppear {
                     NotificationManager.shared.scheduleWeeklySummary(using: viewModel)
                 }
